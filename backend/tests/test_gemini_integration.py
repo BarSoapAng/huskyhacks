@@ -30,7 +30,6 @@ async def test_ai_learning_check_uses_real_gemini() -> None:
     assert isinstance(result.is_learning, bool)
     assert 0 <= result.confidence <= 1
     assert result.reason
-    assert result.detected_topic
 
 
 async def test_ai_procrastination_score_uses_real_gemini() -> None:

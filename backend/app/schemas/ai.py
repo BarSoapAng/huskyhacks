@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -29,7 +31,7 @@ class LearningCheckOutput(ApiModel):
     is_learning: bool = Field(alias="isLearning")
     confidence: float = Field(ge=0.0, le=1.0)
     reason: str
-    detected_topic: str = Field(alias="detectedTopic")
+    detected_topic: str | None = Field(default=None, alias="detectedTopic")
 
 
 class ProcrastinationScoreInput(ApiModel):
@@ -48,5 +50,27 @@ class ProcrastinationScoreInput(ApiModel):
 
 class ProcrastinationScoreOutput(ApiModel):
     procrastination_score: int = Field(ge=0, le=100, alias="procrastinationScore")
+    confidence: float = Field(ge=0.0, le=1.0)
+    reason: str
+
+
+LinkClassification = Literal["okay", "unsure", "bad"]
+
+
+class LinkClassificationInput(ApiModel):
+    url: str
+    platform: str
+    content_type: str = Field(alias="contentType")
+    page_title: str | None = Field(default=None, alias="pageTitle")
+    time_of_day: str | None = Field(default=None, alias="timeOfDay")
+    recent_tab_sequence: list[str] = Field(default_factory=list, alias="recentTabSequence")
+    session_duration_minutes: int | None = Field(
+        default=None,
+        alias="sessionDurationMinutes",
+    )
+
+
+class LinkClassificationOutput(ApiModel):
+    classification: LinkClassification
     confidence: float = Field(ge=0.0, le=1.0)
     reason: str

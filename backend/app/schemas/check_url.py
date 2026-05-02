@@ -8,18 +8,20 @@ from app.schemas.ai import ApiModel
 
 Platform = Literal["youtube", "instagram", "tiktok", "reddit", "twitter", "unknown"]
 ContentType = Literal["shorts", "video", "feed", "profile", "search", "unknown"]
-CheckUrlAction = Literal["allow", "soft_alert", "hard_block"]
-CheckUrlSource = Literal[
-    "safe_url",
-    "learning_check",
-    "procrastination_model",
-    "debounce_pending",
+CheckUrlAction = Literal[
+    "continue",
+    "ask_user",
+    "hard_ban",
+    "productive_started",
+    "procrastination_ended",
 ]
+CheckUrlClassification = Literal["good", "learning", "okay", "unsure", "bad"]
+CheckUrlSessionType = Literal["productive", "procrastination", "allowed"]
 
 
 class CheckUrlRequest(ApiModel):
     url: str = Field(min_length=1)
-    page_title: str | None = Field(default=None, alias="pageTitle")
+    page_title: str = Field(default="", alias="pageTitle")
     mock_transcript: str | None = Field(default=None, alias="mockTranscript")
     mock_page_description: str | None = Field(
         default=None,
@@ -32,6 +34,11 @@ class CheckUrlRequest(ApiModel):
         alias="sessionDurationMinutes",
     )
     time_of_day: str | None = Field(default=None, alias="timeOfDay")
+
+    @field_validator("page_title", mode="before")
+    @classmethod
+    def normalize_page_title(cls, value: str | None) -> str:
+        return "" if value is None else str(value)
 
     @field_validator("url")
     @classmethod
@@ -56,7 +63,7 @@ class NormalizedUrl(ApiModel):
 class CheckUrlResponse(ApiModel):
     allowed: bool
     action: CheckUrlAction
-    procrastination_score: int | None = Field(alias="procrastinationScore")
+    session_type: CheckUrlSessionType | None = Field(alias="sessionType")
     reason: str | None
+    classification: CheckUrlClassification | None
     confidence: float | None
-    source: CheckUrlSource
