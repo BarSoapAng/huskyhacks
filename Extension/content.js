@@ -1,9 +1,9 @@
 // Listen for messages from background.js
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    showPopup(request.action, request.web_url);
+    showPopup(request.action, request.web_url, request.reason, request.procrastinationScore);
 });
 
-function showPopup(action, web_url) {
+function showPopup(action, web_url, reason, procrastinationScore) {
     // 1. Remove existing popups to prevent duplicates
     const existing = document.getElementById("focus-buddy-overlay");
     if (existing) existing.remove();
@@ -14,11 +14,15 @@ function showPopup(action, web_url) {
     let buttonText = "";
     let isBlocking = false;
 
-    if (action === "block") {
+    if (action === "hard_block") {
         title = "Time to Focus";
-        message = "This tab has been blocked. Let's get back to work!";
+        message = reason || "This tab has been blocked. Let's get back to work!";
         buttonText = "Close Tab";
         isBlocking = true;
+    } else if (action === "soft_alert") {
+        title = "Are you procrastinating?";
+        message = reason || `You've been scrolling for a while. Is this productive? (Score: ${procrastinationScore || 'N/A'})`;
+        buttonText = "Back to Work";
     } else if (action === "timer") {
         title = "Taking a break?";
         message = "This looks like a break. Would you like to start a 5-minute timer?";
@@ -28,6 +32,9 @@ function showPopup(action, web_url) {
         message = "You've been scrolling for a while. Is this productive?";
         buttonText = "Back to Work";
     }
+
+    // Skip if no valid action
+    if (!title) return;
 
     // 3. Create the UI Overlay
     const overlay = document.createElement("div");
@@ -75,7 +82,7 @@ function showPopup(action, web_url) {
 
     // 5. Add Button Functionality
     document.getElementById("fb-action-btn").addEventListener("click", () => {
-        if (action === "block") {
+        if (action === "hard_block") {
             // Asks background.js to force-close this browser tab
             chrome.runtime.sendMessage({ closeTab: true }); 
         } else {
