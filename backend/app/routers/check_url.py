@@ -162,7 +162,7 @@ async def demo_check_url_user2(
         allowed=True,
         action="continue",
         sessionType="allowed",
-        reason="Demo user 2: URL is allowed by demo rules.",
+        reason="This link looks good!",
         classification="good",
         confidence=1.0,
     )

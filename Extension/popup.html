@@ -2,10 +2,15 @@
 <html>
 <head>
   <style>
-    body { width: 200px; margin: 0; padding: 20px; font-family: 'Segoe UI', sans-serif; text-align: center; color: #202124; }
+    body { width: 220px; margin: 0; padding: 20px; font-family: 'Segoe UI', sans-serif; text-align: center; color: #202124; }
     .status-container { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 600; color: #ea4335; margin-bottom: 15px; }
     .status-dot { width: 10px; height: 10px; background-color: #ea4335; border-radius: 50%; }
     hr { border: 0; border-top: 1px solid #e8eaed; margin: 15px 0; }
+    button.danger-btn { width: 100%; min-height: 38px; margin-bottom: 8px; border: 1px solid #d93025; border-radius: 8px; background: #fff; color: #b3261e; cursor: pointer; font-size: 12px; font-weight: 650; line-height: 1.25; }
+    button.danger-btn:hover { background: #fce8e6; }
+    button.danger-btn:disabled { cursor: default; opacity: 0.65; }
+    .manual-action-status { min-height: 16px; margin: 0 0 12px; color: #0f9d58; font-size: 11px; line-height: 1.35; }
+    .manual-action-status.error { color: #ea4335; }
     a.link-btn { text-decoration: none; color: #1a73e8; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 5px; }
     a.link-btn:hover { color: #1557b0; }
   </style>
@@ -37,18 +42,19 @@
       <div id="classification-result" style="color: #5f6368;"></div>
     </div>
     <div style="margin-bottom: 8px;">
-      <strong>Score:</strong>
-      <div id="score-result" style="color: #5f6368;"></div>
-    </div>
-    <div style="margin-bottom: 8px;">
       <strong>Reason:</strong>
       <div id="reason-result" style="color: #5f6368; font-size: 11px;"></div>
     </div>
     <div>
-      <strong>Confidence:</strong>
+      <strong>AI confidence:</strong>
       <div id="confidence-result" style="color: #5f6368;"></div>
     </div>
   </div>
+
+  <button id="mark-unproductive-button" class="danger-btn" type="button">
+    Mark current session as unproductive
+  </button>
+  <div id="mark-unproductive-status" class="manual-action-status" aria-live="polite"></div>
 
   <a href="#" target="_blank" id="dashboard-link" class="link-btn">
     <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>

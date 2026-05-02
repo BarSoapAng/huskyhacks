@@ -33,6 +33,8 @@ from app.utils.normalize_url import normalize_url
 
 router = APIRouter(prefix="/api", tags=["create-session"])
 
+LOCAL_DEMO_USER_ID = "11111111-1111-4111-8111-111111111111"
+
 
 async def get_create_session_user(
     authorization: str | None = Header(default=None, alias="Authorization"),
@@ -145,6 +147,85 @@ async def create_session(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "INTERNAL_ERROR",
             "Unable to create session.",
+        )
+
+
+@router.post(
+    "/demo/mark-current-session-unproductive",
+    response_model=CreateSessionResponse,
+)
+async def mark_current_session_unproductive(
+    payload: Any = Body(default=None),
+    store: SupabaseBrowsingStore = Depends(get_browsing_store),
+) -> CreateSessionResponse | JSONResponse:
+    try:
+        request = CreateSessionRequest.model_validate(
+            {
+                **(payload if isinstance(payload, dict) else {}),
+                "sessionType": "procrastination",
+            }
+        )
+    except ValidationError:
+        return _error_response(
+            status.HTTP_400_BAD_REQUEST,
+            "INVALID_REQUEST",
+            "url must be valid.",
+        )
+
+    now = datetime.now(UTC)
+
+    try:
+        user, store = _get_local_demo_source(store)
+        normalized = normalize_url(request.url or "")
+        check_url_request = CheckUrlRequest(
+            url=request.url or "",
+            pageTitle=request.page_title,
+        )
+        visit, elapsed_seconds = await get_or_create_current_visit(
+            request=check_url_request,
+            normalized=normalized,
+            user=user,
+            store=store,
+            now=now,
+        )
+
+        await _deactivate_latest_session(user, store, "productive_session")
+        await _deactivate_active_session(user, store, "procrastination_session")
+
+        session = await _start_session(
+            user,
+            store,
+            "procrastination_session",
+            visit,
+            now,
+            elapsed_seconds,
+        )
+        return CreateSessionResponse(
+            success=True,
+            action="procrastination_session_active",
+            sessionType="procrastination",
+            sessionId=_session_id(session),
+            reason="Current session marked as unproductive.",
+        )
+    except SupabaseRequestError as exc:
+        if exc.status_code in {
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_403_FORBIDDEN,
+        }:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Supabase session.",
+            ) from exc
+        return _error_response(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "INTERNAL_ERROR",
+            "Unable to mark session as unproductive.",
+        )
+    except SupabaseConfigurationError:
+        return _error_response(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "INTERNAL_ERROR",
+            "Unable to mark session as unproductive.",
         )
 
 
@@ -362,6 +443,19 @@ async def _start_session(
     )
 
 
+def _get_local_demo_source(
+    store: SupabaseBrowsingStore,
+) -> tuple[AuthenticatedUser, SupabaseBrowsingStore]:
+    if not isinstance(store, SupabaseBrowsingStore):
+        return AuthenticatedUser(id=LOCAL_DEMO_USER_ID, access_token="local-demo"), store
+
+    settings = get_settings()
+    if not settings.supabase_secret_key:
+        raise SupabaseConfigurationError("SUPABASE_SECRET_KEY is not configured.")
+
+    return _local_backend_source(settings, user_id=LOCAL_DEMO_USER_ID)
+
+
 def _get_create_session_source(
     session_type: CreateSessionType,
     current_user: AuthenticatedUser | None,
@@ -391,6 +485,8 @@ def _get_create_session_source(
 
 def _local_backend_source(
     settings: Settings,
+    *,
+    user_id: str = "",
 ) -> tuple[AuthenticatedUser, SupabaseBrowsingStore]:
     client = SupabaseRestClient(
         Settings(
@@ -402,9 +498,29 @@ def _local_backend_source(
         )
     )
     return (
-        AuthenticatedUser(id="", access_token=settings.supabase_secret_key or ""),
+        AuthenticatedUser(id=user_id, access_token=settings.supabase_secret_key or ""),
         SupabaseBrowsingStore(client),
     )
+
+
+async def _deactivate_latest_session(
+    user: AuthenticatedUser,
+    store: SupabaseBrowsingStore,
+    table: SessionTable,
+) -> None:
+    sessions = await store.list_recent_sessions(user, table, limit=1)
+    if sessions:
+        await store.update_session(user, table, sessions[0], {"active": False})
+
+
+async def _deactivate_active_session(
+    user: AuthenticatedUser,
+    store: SupabaseBrowsingStore,
+    table: SessionTable,
+) -> None:
+    session = await store.get_active_session(user, table)
+    if session:
+        await store.update_session(user, table, session, {"active": False})
 
 
 def _extract_bearer_token(authorization: str | None) -> str | None:

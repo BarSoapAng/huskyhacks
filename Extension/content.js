@@ -248,14 +248,14 @@ function buildAskMessage({ reason, classification, confidence }) {
     if (reason) return reason;
 
     const confidenceText =
-        typeof confidence === "number" ? `${Math.round(confidence * 100)}%` : "unknown confidence";
+        typeof confidence === "number" ? `${Math.round(confidence * 100)}% AI confidence` : "unknown AI confidence";
     return `This page looks ${classification || "uncertain"} with ${confidenceText}.`;
 }
 
 function buildMetaText({ classification, confidence, sessionType }) {
     const parts = [];
     if (classification) parts.push(`Classification: ${classification}`);
-    if (typeof confidence === "number") parts.push(`Confidence: ${Math.round(confidence * 100)}%`);
+    if (typeof confidence === "number") parts.push(`AI confidence: ${Math.round(confidence * 100)}%`);
     if (sessionType) parts.push(`Session: ${sessionType}`);
     return parts.join(" | ");
 }

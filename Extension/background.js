@@ -1,7 +1,7 @@
 import { EXTENSION_PORT, WEB_URL } from './config.js';
 
 const BACKEND_URL = `${EXTENSION_PORT}/health`;
-const CHECK_URL = `${EXTENSION_PORT}/api/check-url`;
+const CHECK_URL = `${EXTENSION_PORT}/api/demo_check_url_user2`;
 
 const VALID_ACTIONS = new Set([
     'continue',
