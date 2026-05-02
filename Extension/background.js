@@ -1,10 +1,11 @@
 import { EXTENSION_PORT } from './config.js';
 
 const BACKEND_URL = `${EXTENSION_PORT}/health`;
+const POPUP_URL = `${EXTENSION_PORT}/check-url`;
 
 async function checkBackendStatus() {
     try {
-        const response = await fetch(BACKEND_URL);
+        const response = await fetch(POPUP_URL);
         const data = await response.json();
 
         // Save the Vite web URL and connection status
