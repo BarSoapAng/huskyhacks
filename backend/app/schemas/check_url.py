@@ -60,6 +60,14 @@ class NormalizedUrl(ApiModel):
     content_type: ContentType = Field(alias="contentType")
 
 
+class ActiveSession(ApiModel):
+    id: str
+    type: CheckUrlSessionType
+    duration: float
+    active: bool
+    started_at: str = Field(alias="startedAt")
+
+
 class CheckUrlResponse(ApiModel):
     allowed: bool
     action: CheckUrlAction
@@ -67,3 +75,4 @@ class CheckUrlResponse(ApiModel):
     reason: str | None
     classification: CheckUrlClassification | None
     confidence: float | None
+    active_session: ActiveSession | None = Field(default=None, alias="activeSession")

@@ -9,11 +9,15 @@ from app.services.gemini_client import (
     GeminiConfigurationError,
     GeminiGenerationError,
 )
-from app.services.supabase_browsing import SupabaseBrowsingStore, get_browsing_store
+from app.services.supabase_browsing import (
+    SupabaseBrowsingStore,
+    get_anonymous_browsing_store,
+    get_browsing_store,
+)
 from app.services.supabase_client import (
     AuthenticatedUser,
     SupabaseRequestError,
-    get_current_user,
+    get_current_user_optional,
 )
 from app.services.url_classifier import classify_url
 from app.utils.normalize_url import normalize_url
@@ -28,10 +32,14 @@ _demo_user2_productive_started = False
 @router.post("/check-url", response_model=CheckUrlResponse)
 async def check_url(
     payload: Any = Body(default=None),
-    user: AuthenticatedUser = Depends(get_current_user),
+    user: AuthenticatedUser | None = Depends(get_current_user_optional),
     store: SupabaseBrowsingStore = Depends(get_browsing_store),
 ) -> CheckUrlResponse:
     request = _validate_check_url_request(payload)
+
+    if user is None:
+        user = AuthenticatedUser(id="anonymous", access_token="anonymous")
+        store = get_anonymous_browsing_store()
 
     try:
         return await classify_url(request, user=user, store=store)

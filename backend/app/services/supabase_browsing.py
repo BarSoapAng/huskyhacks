@@ -210,6 +210,120 @@ def get_browsing_store() -> SupabaseBrowsingStore:
     return SupabaseBrowsingStore(get_supabase_rest_client())
 
 
+class AnonymousBrowsingStore:
+    def __init__(self):
+        # Simple in-memory storage for anonymous user
+        self._visits: dict[str, dict[str, Any]] = {}
+        self._sessions: dict[str, dict[str, Any]] = {}
+
+    async def list_bad_domains(self, user: AuthenticatedUser) -> list[str]:
+        return []
+
+    async def get_latest_visit(
+        self,
+        user: AuthenticatedUser,
+    ) -> dict[str, Any] | None:
+        # Return the most recent visit for this user
+        visits = [v for v in self._visits.values() if v.get("user_id") == user.id]
+        if not visits:
+            return None
+        return max(visits, key=lambda v: v.get("last_seen_at", ""))
+
+    async def create_visit(
+        self,
+        user: AuthenticatedUser,
+        *,
+        url: str,
+        normalized_url: str,
+        domain: str,
+        page_title: str,
+        now: datetime,
+    ) -> dict[str, Any]:
+        visit_id = f"anon-visit-{len(self._visits) + 1}"
+        visit = {
+            "id": visit_id,
+            "user_id": user.id,
+            "url": url,
+            "normalized_url": normalized_url,
+            "domain": domain,
+            "page_title": page_title,
+            "duration": 0,
+            "last_seen_at": _format_datetime(now),
+            "timestamp": _format_datetime(now),
+        }
+        self._visits[visit_id] = visit
+        return visit
+
+    async def update_visit(
+        self,
+        user: AuthenticatedUser,
+        visit: dict[str, Any],
+        *,
+        duration: float,
+        page_title: str,
+        now: datetime,
+    ) -> dict[str, Any]:
+        visit_id = visit["id"]
+        if visit_id in self._visits:
+            self._visits[visit_id].update({
+                "duration": duration,
+                "page_title": page_title,
+                "last_seen_at": _format_datetime(now),
+            })
+        return self._visits[visit_id]
+
+    async def get_active_session(
+        self,
+        user: AuthenticatedUser,
+        table: SessionTable,
+    ) -> dict[str, Any] | None:
+        session_key = f"{user.id}-{table}"
+        session = self._sessions.get(session_key)
+        if session and session.get("active"):
+            return session
+        return None
+
+    async def create_session(
+        self,
+        user: AuthenticatedUser,
+        table: SessionTable,
+        *,
+        visit_id: str,
+        now: datetime,
+        duration: float = 0,
+    ) -> dict[str, Any]:
+        session_key = f"{user.id}-{table}"
+        session = {
+            "id": f"anon-session-{table}-{len(self._sessions) + 1}",
+            "user_id": user.id,
+            "active": True,
+            "duration": duration,
+            "visits": [visit_id],
+            "timestamp": _format_datetime(now),
+        }
+        self._sessions[session_key] = session
+        return session
+
+    async def update_session(
+        self,
+        user: AuthenticatedUser,
+        table: SessionTable,
+        session: dict[str, Any],
+        updates: dict[str, Any],
+    ) -> dict[str, Any]:
+        session_key = f"{user.id}-{table}"
+        if session_key in self._sessions:
+            self._sessions[session_key].update(updates)
+        return self._sessions[session_key]
+
+
+def get_anonymous_browsing_store() -> AnonymousBrowsingStore:
+    # Return a singleton instance to persist state across requests
+    if not hasattr(get_anonymous_browsing_store, "_instance"):
+        get_anonymous_browsing_store._instance = AnonymousBrowsingStore()
+    return get_anonymous_browsing_store._instance
+
+
 def append_visit_id(session: dict[str, Any], visit_id: str) -> list[str]:
     visits = list(session.get("visits") or [])
     if visit_id not in visits:

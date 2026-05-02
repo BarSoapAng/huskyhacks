@@ -41,17 +41,27 @@ async function updatePopup() {
             console.log('[FocusBuddy Popup] Displaying result:', result);
             
             // Populate the check result section
-            document.getElementById("last-url").innerText = storage.lastCheckUrl;
+                document.getElementById("last-url").innerText = storage.lastCheckUrl;
             document.getElementById("action-result").innerText = result.action || 'N/A';
-            document.getElementById("score-result").innerText = result.procrastinationScore !== null ? `${result.procrastinationScore}/100` : 'N/A';
+            document.getElementById("session-type-result").innerText = result.sessionType || 'N/A';
+            document.getElementById("classification-result").innerText = result.classification || 'N/A';
+            document.getElementById("score-result").innerText =
+                result.procrastinationScore != null
+                    ? `${result.procrastinationScore}/100`
+                    : result.confidence != null
+                    ? `${(result.confidence * 100).toFixed(1)}%`
+                    : 'N/A';
             document.getElementById("reason-result").innerText = result.reason || 'No reason provided';
-            document.getElementById("confidence-result").innerText = result.confidence !== null ? `${(result.confidence * 100).toFixed(1)}%` : 'N/A';
+            document.getElementById("confidence-result").innerText =
+                result.confidence != null
+                    ? `${(result.confidence * 100).toFixed(1)}%`
+                    : 'N/A';
             
             // Set color based on action
             const actionEl = document.getElementById("action-result");
-            if (result.action === 'hard_block') {
+            if (result.action === 'hard_ban') {
                 actionEl.style.color = '#ea4335'; // Red
-            } else if (result.action === 'soft_alert') {
+            } else if (result.action === 'ask_user') {
                 actionEl.style.color = '#f57c00'; // Orange
             } else {
                 actionEl.style.color = '#0f9d58'; // Green

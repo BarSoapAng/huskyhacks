@@ -152,6 +152,43 @@ async def get_current_user(
 
     try:
         return await get_supabase_rest_client().get_user(access_token)
+    except SupabaseRequestError as exc:
+        if exc.status_code in {
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_403_FORBIDDEN,
+        }:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Supabase session.",
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Supabase request failed.",
+        ) from exc
+
+
+async def get_current_user_optional(
+    authorization: str | None = Header(default=None, alias="Authorization"),
+) -> AuthenticatedUser | None:
+    access_token = _extract_bearer_token(authorization)
+    if not access_token:
+        return None
+
+    try:
+        return await get_supabase_rest_client().get_user(access_token)
+    except SupabaseRequestError as exc:
+        if exc.status_code in {
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_403_FORBIDDEN,
+        }:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Supabase session.",
+            ) from exc
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Supabase request failed.",
+        ) from exc
     except SupabaseConfigurationError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
