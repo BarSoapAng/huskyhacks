@@ -7,7 +7,7 @@ chrome.storage.local.get(["web_url", "isConnected"], (data) => {
         dashboardLink.href = data.web_url;
     } else {
         // Fallback just in case the server hasn't sent a URL yet
-        dashboardLink.href = "https://google.com"; 
+        dashboardLink.href = WEB_URL; 
     }
 
     // 2. Update the status indicator (Optional, but good for debugging!)
