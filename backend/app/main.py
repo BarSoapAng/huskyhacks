@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import check_url, health
+from app.routers import check_url, debug, health
 
 app = FastAPI(
     title="HuskyHacks API",
@@ -23,3 +23,4 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(check_url.router)
+app.include_router(debug.router)
