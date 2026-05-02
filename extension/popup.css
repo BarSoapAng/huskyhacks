@@ -1,0 +1,90 @@
+:root {
+  color: #17202a;
+  background: #f6f8fb;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 280px;
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.popup-shell {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+header p {
+  margin: 0 0 6px;
+  color: #5b6673;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  color: #111827;
+  font-size: 40px;
+  letter-spacing: 0;
+}
+
+label {
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.timer-controls {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+input {
+  min-height: 38px;
+  border: 1px solid #cfd7e3;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+button {
+  min-height: 36px;
+  border: 1px solid #cfd7e3;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1f2937;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+button:hover {
+  background: #edf3ff;
+}
+
+.dashboard-button {
+  border-color: #1a73e8;
+  background: #1a73e8;
+  color: #ffffff;
+}
+
+.dashboard-button:hover {
+  background: #1765cc;
+}

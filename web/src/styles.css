@@ -1,0 +1,160 @@
+:root {
+  color: #202124;
+  background: #f8fafd;
+  font-family: Arial, Helvetica, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.signin-shell,
+.dashboard-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.signin-card,
+.dashboard-panel {
+  width: min(100%, 448px);
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 40px;
+}
+
+.brand-mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(#4285f4, #34a853, #fbbc04, #ea4335, #4285f4);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 24px 0 8px;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.account-copy,
+.eyebrow {
+  margin: 0 0 32px;
+  color: #3c4043;
+  font-size: 16px;
+}
+
+.eyebrow {
+  margin-bottom: 8px;
+  color: #5f6368;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+form {
+  display: grid;
+  gap: 10px;
+}
+
+label {
+  color: #3c4043;
+  font-size: 13px;
+}
+
+input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  padding: 12px 14px;
+  color: #202124;
+  outline: none;
+}
+
+input:focus {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 1px #1a73e8;
+}
+
+.form-error {
+  margin: 4px 0 0;
+  color: #b3261e;
+  font-size: 13px;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.primary-action,
+.text-action {
+  min-height: 36px;
+  border: 0;
+  border-radius: 4px;
+  padding: 0 20px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.primary-action {
+  background: #1a73e8;
+  color: #ffffff;
+}
+
+.primary-action:hover {
+  background: #1765cc;
+}
+
+.text-action {
+  background: transparent;
+  color: #1a73e8;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.dashboard-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.dashboard-panel h1 {
+  margin-top: 0;
+}
+
+@media (max-width: 540px) {
+  .signin-card,
+  .dashboard-panel {
+    padding: 28px 22px;
+  }
+
+  .dashboard-panel,
+  .form-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

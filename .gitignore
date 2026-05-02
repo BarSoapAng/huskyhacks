@@ -1,0 +1,34 @@
+# Dependencies
+*/node_modules/
+
+# Build output
+dist/
+web/dist/
+
+# Local environment
+.env
+.env.local
+.env.*.local
+web/.env
+web/.env.local
+web/.env.*.local
+!web/.env.example
+!.env.example
+
+# Supabase local runtime
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
