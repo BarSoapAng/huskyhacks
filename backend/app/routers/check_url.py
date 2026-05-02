@@ -89,9 +89,9 @@ async def demo_check_url_user1(
                 allowed=True,
                 action="continue",
                 sessionType="allowed",
-                reason="Demo user 1: YouTube is allowed from 5 PM to 6 PM.",
+                reason="You're typically taking a break at this time :)",
                 classification="okay",
-                confidence=1.0,
+                confidence=0.93,
             )
 
         if _is_hour(now, 20):
@@ -99,16 +99,16 @@ async def demo_check_url_user1(
                 allowed=False,
                 action="hard_ban",
                 sessionType="procrastination",
-                reason="Demo user 1: YouTube is blocked during the 8 PM hour.",
+                reason="You seem to be working on a hardware project",
                 classification="bad",
-                confidence=1.0,
+                confidence=0.97,
             )
 
     return CheckUrlResponse(
         allowed=True,
         action="continue",
         sessionType="allowed",
-        reason="Demo user 1: URL is allowed by demo rules.",
+        reason="This link is productive!",
         classification="good",
         confidence=1.0,
     )
@@ -202,9 +202,9 @@ def _demo_user2_unsure_response() -> CheckUrlResponse:
         allowed=True,
         action="ask_user",
         sessionType=None,
-        reason="Demo user 2: YouTube is unsure from 5 PM to 6 PM.",
+        reason="I'm not quite sure what you're working on",
         classification="unsure",
-        confidence=1.0,
+        confidence=0.35,
     )
 
 
