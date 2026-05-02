@@ -1,6 +1,6 @@
 import { EXTENSION_PORT } from './config.js';
 
-const BACKEND_URL = `${EXTENSION_PORT}/status`;
+const BACKEND_URL = `${EXTENSION_PORT}/health`;
 
 async function checkBackendStatus() {
     try {

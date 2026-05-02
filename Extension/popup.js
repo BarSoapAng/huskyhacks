@@ -1,4 +1,4 @@
-import { EXTENSION_PORT } from './config.js';
+import { EXTENSION_PORT, WEB_URL } from './config.js';
 
 const BACKEND_URL = `${EXTENSION_PORT}/status`;
 
@@ -10,15 +10,15 @@ async function updatePopup() {
 
     try {
         const response = await fetch(BACKEND_URL);
-        const data = await response.json();
+        await response.json();
 
-        dashboardLink.href = data.web_url;
+        dashboardLink.href = WEB_URL;
         statusText.innerText = "Connected!";
         statusContainer.style.color = "#0f9d58"; // Green
         statusDot.style.backgroundColor = "#0f9d58";
         
     } catch (error) {
-        dashboardLink.href = "#"; 
+        dashboardLink.href = WEB_URL;
         statusText.innerText = "Disconnected";
         statusContainer.style.color = "#ea4335"; // Red
         statusDot.style.backgroundColor = "#ea4335";
