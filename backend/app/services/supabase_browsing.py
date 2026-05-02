@@ -95,6 +95,28 @@ class SupabaseBrowsingStore:
         )
         return _first_row(rows) or {**visit, "duration": duration}
 
+    async def list_recent_visits(
+        self,
+        user: AuthenticatedUser,
+        *,
+        limit: int,
+    ) -> list[dict[str, Any]]:
+        query = {
+            "select": "id,timestamp,duration,url,page_title",
+            "order": "timestamp.desc",
+            "limit": str(limit),
+        }
+        if user.id:
+            query["user_id"] = f"eq.{user.id}"
+
+        rows = await self._client.request(
+            "GET",
+            "/rest/v1/visits",
+            access_token=user.access_token,
+            query=query,
+        )
+        return rows if isinstance(rows, list) else []
+
     async def get_active_session(
         self,
         user: AuthenticatedUser,
@@ -113,6 +135,29 @@ class SupabaseBrowsingStore:
             },
         )
         return _first_row(rows)
+
+    async def list_recent_sessions(
+        self,
+        user: AuthenticatedUser,
+        table: SessionTable,
+        *,
+        limit: int,
+    ) -> list[dict[str, Any]]:
+        query = {
+            "select": "id,timestamp,active,duration,visits",
+            "order": "timestamp.desc",
+            "limit": str(limit),
+        }
+        if user.id:
+            query["user_id"] = f"eq.{user.id}"
+
+        rows = await self._client.request(
+            "GET",
+            f"/rest/v1/{table}",
+            access_token=user.access_token,
+            query=query,
+        )
+        return rows if isinstance(rows, list) else []
 
     async def create_session(
         self,
