@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "dev": "npm --prefix web run dev",
+    "backend:dev": "cd backend && uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000",
     "build": "npm --prefix web run build",
     "preview": "npm --prefix web run preview"
   }

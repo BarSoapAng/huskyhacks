@@ -10,7 +10,7 @@ Install or select Python 3.12, then create the virtual environment with `uv`:
 cd backend
 uv python install 3.12
 uv venv --python 3.12
-uv pip install -r requirements.txt
+uv sync
 ```
 
 The backend currently targets Python 3.12 because the pinned FastAPI/Pydantic versions can fail to build under Python 3.13.
