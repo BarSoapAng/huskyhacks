@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 import pytest
 
 from app.main import app
+from app.routers.create_session import get_create_session_user
 from app.routers.check_url import get_browsing_store, get_current_user
 from app.schemas.ai import LearningCheckOutput, LinkClassificationOutput
 from app.schemas.check_url import CheckUrlRequest
@@ -157,6 +158,7 @@ def teardown_function() -> None:
 
 def _use_store(store: FakeBrowsingStore) -> None:
     app.dependency_overrides[get_current_user] = lambda: USER
+    app.dependency_overrides[get_create_session_user] = lambda: USER
     app.dependency_overrides[get_browsing_store] = lambda: store
 
 
@@ -279,6 +281,47 @@ def test_create_session_starts_procrastination_and_ends_productive_session() -> 
     }
     assert store.sessions["productive_session"][0]["active"] is False
     assert len(store.sessions["procrastination_session"]) == 1
+
+
+def test_create_session_marks_latest_visit_allowed_without_session() -> None:
+    store = FakeBrowsingStore()
+    app.dependency_overrides[get_browsing_store] = lambda: store
+    store.visits.append(
+        {
+            "id": "visit-1",
+            "user_id": USER.id,
+            "timestamp": datetime(2026, 5, 2, 20, 0, tzinfo=UTC),
+            "duration": 24.0,
+            "url": "https://example.com/docs",
+            "page_title": "Example docs",
+        }
+    )
+    store.sessions["procrastination_session"].append(
+        {
+            "id": "procrastination-session-1",
+            "user_id": USER.id,
+            "timestamp": datetime(2026, 5, 2, 19, 59, tzinfo=UTC),
+            "active": True,
+            "duration": 12.0,
+            "visits": ["visit-1"],
+        }
+    )
+
+    response = client.post(
+        "/api/create-session",
+        json={"sessionType": "allowed"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "success": True,
+        "action": "allowed_session_active",
+        "sessionType": "allowed",
+        "sessionId": "allowed_sessions-1",
+        "reason": "Current session marked as allowed.",
+    }
+    assert store.sessions["procrastination_session"][0]["active"] is False
+    assert store.sessions["allowed_sessions"][0]["visits"] == ["visit-1"]
 
 
 def test_session_visualization_returns_recent_activity() -> None:

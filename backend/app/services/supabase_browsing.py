@@ -102,7 +102,7 @@ class SupabaseBrowsingStore:
         limit: int,
     ) -> list[dict[str, Any]]:
         query = {
-            "select": "id,timestamp,duration,url,page_title",
+            "select": "id,user_id,timestamp,duration,url,page_title",
             "order": "timestamp.desc",
             "limit": str(limit),
         }
