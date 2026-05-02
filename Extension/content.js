@@ -32,15 +32,11 @@ function showPopup(action, web_url) {
     // 3. Create the UI Overlay
     const overlay = document.createElement("div");
     overlay.id = "focus-buddy-overlay";
-    
-    // CSS to dim the background. If "blocking", it's opaque. If just a prompt, it's slightly transparent.
     overlay.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
         background: ${isBlocking ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.4)'};
-        backdrop-filter: blur(4px);
-        display: flex; align-items: center; justify-content: center;
-        z-index: 2147483647; /* Maximum z-index to stay on top */
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center;
+        z-index: 2147483647; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     `;
 
     // 4. Create the Card (Google Style)
@@ -48,25 +44,22 @@ function showPopup(action, web_url) {
     card.style.cssText = `
         background: white; padding: 30px; border-radius: 16px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.15); width: 350px;
-        text-align: center; display: flex; flex-direction: column; gap: 15px;
-        color: #202124;
+        text-align: center; display: flex; flex-direction: column; gap: 15px; color: #202124;
     `;
 
-    // Inner HTML of the card
     card.innerHTML = `
         <h2 style="margin: 0; font-size: 22px; font-weight: 500;">${title}</h2>
         <p style="margin: 0; font-size: 14px; color: #5f6368; line-height: 1.5;">${message}</p>
         
         <button id="fb-action-btn" style="
-            background: #1a73e8; color: white; border: none; 
-            padding: 10px 20px; border-radius: 8px; font-weight: 600; 
-            cursor: pointer; margin-top: 10px; font-size: 14px; transition: 0.2s;">
+            background: #1a73e8; color: white; border: none; padding: 10px 20px; 
+            border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; 
+            font-size: 14px; transition: 0.2s;">
             ${buttonText}
         </button>
 
         <hr style="border: 0; border-top: 1px solid #e8eaed; width: 100%; margin: 10px 0;">
         
-        <!-- The Web URL Link / Icon -->
         <a href="${web_url}" target="_blank" style="
             text-decoration: none; color: #1a73e8; font-size: 13px; font-weight: 500;
             display: flex; align-items: center; justify-content: center; gap: 5px;">
@@ -83,20 +76,16 @@ function showPopup(action, web_url) {
     // 5. Add Button Functionality
     document.getElementById("fb-action-btn").addEventListener("click", () => {
         if (action === "block") {
-            // Closes the current tab
+            // Asks background.js to force-close this browser tab
             chrome.runtime.sendMessage({ closeTab: true }); 
-            window.close(); // Fallback
         } else {
-            // Logic for starting a timer goes here
-            overlay.remove();
+            overlay.remove(); // Just dismisses it for now
         }
     });
 
-    // Hover effect for the main button
     document.getElementById("fb-action-btn").addEventListener("mouseover", function() { this.style.background = "#1557b0"; });
     document.getElementById("fb-action-btn").addEventListener("mouseout", function() { this.style.background = "#1a73e8"; });
 
-    // Dismiss button for non-blocking prompts
     if (!isBlocking) {
         document.getElementById("fb-dismiss").addEventListener("click", () => overlay.remove());
     }

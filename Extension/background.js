@@ -1,21 +1,19 @@
-function connectToPython() {
-    const socket = new WebSocket("ws://localhost:8765");
+import { EXTENSION_PORT } from './config.js';
 
-    socket.onopen = () => {
-        console.log("Connected to Python Server");
-        // Save connection status as true
-        chrome.storage.local.set({ isConnected: true });
-    };
+const BACKEND_URL = `${EXTENSION_PORT}/status`;
 
-    socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        
-        // If Python sends a web_url, save it to local storage for the popup to use
-        if (data.web_url) {
-            chrome.storage.local.set({ web_url: data.web_url });
-        }
-        
-        // If there's an action (block, timer, etc.), send it to the active tab
+async function checkBackendStatus() {
+    try {
+        const response = await fetch(BACKEND_URL);
+        const data = await response.json();
+
+        // Save the Vite web URL and connection status
+        chrome.storage.local.set({ 
+            isConnected: true, 
+            web_url: data.web_url 
+        });
+
+        // If the backend has a pending action (e.g., "block"), send it to the active tab
         if (data.action) {
             chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
                 if (tabs.length > 0) {
@@ -23,13 +21,19 @@ function connectToPython() {
                 }
             });
         }
-    };
-
-    socket.onclose = () => {
-        // Save connection status as false
+    } catch (error) {
+        // If the fetch fails, the server is off
         chrome.storage.local.set({ isConnected: false });
-        setTimeout(connectToPython, 5000);
-    };
+    }
 }
 
-connectToPython();
+// Poll the backend every 2 seconds
+setInterval(checkBackendStatus, 2000);
+checkBackendStatus(); // Run once immediately
+
+// Listen for messages from content.js (e.g. if the user clicks "Close Tab" on a block prompt)
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.closeTab && sender.tab) {
+        chrome.tabs.remove(sender.tab.id);
+    }
+});
