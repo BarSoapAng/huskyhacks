@@ -1,99 +1,284 @@
-// Listen for messages from background.js
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    showPopup(request.action, request.web_url, request.reason, request.procrastinationScore);
+const OVERLAY_ID = "focus-buddy-overlay";
+const ASK_POPUP_ID = "focus-buddy-ask-popup";
+
+chrome.runtime.onMessage.addListener((request) => {
+    if (request.action === "hard_ban") {
+        showHardBan(request);
+        return;
+    }
+
+    if (request.action === "ask_user") {
+        showAskUser(request);
+    }
 });
 
-function showPopup(action, web_url, reason, procrastinationScore) {
-    // 1. Remove existing popups to prevent duplicates
-    const existing = document.getElementById("focus-buddy-overlay");
-    if (existing) existing.remove();
+function removeFocusBuddyUi() {
+    document.getElementById(OVERLAY_ID)?.remove();
+    document.getElementById(ASK_POPUP_ID)?.remove();
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+}
 
-    // 2. Define text and styles based on the action
-    let title = "";
-    let message = "";
-    let buttonText = "";
-    let isBlocking = false;
+function showAskUser(details) {
+    removeFocusBuddyUi();
 
-    if (action === "hard_block") {
-        title = "Time to Focus";
-        message = reason || "This tab has been blocked. Let's get back to work!";
-        buttonText = "Close Tab";
-        isBlocking = true;
-    } else if (action === "soft_alert") {
-        title = "Are you procrastinating?";
-        message = reason || `You've been scrolling for a while. Is this productive? (Score: ${procrastinationScore || 'N/A'})`;
-        buttonText = "Back to Work";
-    } else if (action === "timer") {
-        title = "Taking a break?";
-        message = "This looks like a break. Would you like to start a 5-minute timer?";
-        buttonText = "Start Timer";
-    } else if (action === "procrastinate") {
-        title = "Are you procrastinating?";
-        message = "You've been scrolling for a while. Is this productive?";
-        buttonText = "Back to Work";
-    }
-
-    // Skip if no valid action
-    if (!title) return;
-
-    // 3. Create the UI Overlay
-    const overlay = document.createElement("div");
-    overlay.id = "focus-buddy-overlay";
-    overlay.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background: ${isBlocking ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.4)'};
-        backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center;
-        z-index: 2147483647; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    const popup = document.createElement("aside");
+    popup.id = ASK_POPUP_ID;
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-live", "polite");
+    popup.style.cssText = `
+        position: fixed;
+        top: 84px;
+        right: 18px;
+        width: min(340px, calc(100vw - 36px));
+        box-sizing: border-box;
+        z-index: 2147483647;
+        padding: 16px;
+        border: 1px solid #dfe3ea;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #202124;
+        box-shadow: 0 18px 48px rgba(32, 33, 36, 0.22);
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     `;
 
-    // 4. Create the Card (Google Style)
-    const card = document.createElement("div");
-    card.style.cssText = `
-        background: white; padding: 30px; border-radius: 16px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15); width: 350px;
-        text-align: center; display: flex; flex-direction: column; gap: 15px; color: #202124;
+    const title = makeElement("h2", "Are you procrastinating?", `
+        margin: 0 28px 8px 0;
+        font-size: 17px;
+        line-height: 1.25;
+        font-weight: 650;
+        color: #202124;
+    `);
+
+    const closeButton = makeElement("button", "x", `
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 28px;
+        height: 28px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: #5f6368;
+        cursor: pointer;
+        font-size: 18px;
+        line-height: 28px;
+    `);
+    closeButton.type = "button";
+    closeButton.setAttribute("aria-label", "Dismiss");
+    closeButton.addEventListener("click", () => popup.remove());
+
+    const message = makeElement("p", buildAskMessage(details), `
+        margin: 0 0 14px;
+        color: #4b5563;
+        font-size: 13px;
+        line-height: 1.45;
+    `);
+
+    const actions = document.createElement("div");
+    actions.style.cssText = `
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
     `;
 
-    card.innerHTML = `
-        <h2 style="margin: 0; font-size: 22px; font-weight: 500;">${title}</h2>
-        <p style="margin: 0; font-size: 14px; color: #5f6368; line-height: 1.5;">${message}</p>
-        
-        <button id="fb-action-btn" style="
-            background: #1a73e8; color: white; border: none; padding: 10px 20px; 
-            border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; 
-            font-size: 14px; transition: 0.2s;">
-            ${buttonText}
-        </button>
+    const yesButton = makeButton("Yes", true);
+    const noButton = makeButton("No", false);
+    yesButton.addEventListener("click", () => showReminderStep(popup, details));
+    noButton.addEventListener("click", () => popup.remove());
 
-        <hr style="border: 0; border-top: 1px solid #e8eaed; width: 100%; margin: 10px 0;">
-        
-        <a href="${web_url}" target="_blank" style="
-            text-decoration: none; color: #1a73e8; font-size: 13px; font-weight: 500;
-            display: flex; align-items: center; justify-content: center; gap: 5px;">
-            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-            Open Dashboard
-        </a>
-        
-        ${!isBlocking ? `<span id="fb-dismiss" style="color: #5f6368; font-size: 12px; cursor: pointer; margin-top: 5px;">Dismiss</span>` : ''}
+    actions.append(yesButton, noButton);
+    popup.append(title, closeButton, message, actions);
+    document.documentElement.appendChild(popup);
+}
+
+function showReminderStep(popup, details) {
+    popup.replaceChildren();
+
+    const title = makeElement("h2", "Want a reminder?", `
+        margin: 0 0 8px;
+        font-size: 17px;
+        line-height: 1.25;
+        font-weight: 650;
+        color: #202124;
+    `);
+    const message = makeElement("p", "Choose when Focus Buddy should nudge you back.", `
+        margin: 0 0 14px;
+        color: #4b5563;
+        font-size: 13px;
+        line-height: 1.45;
+    `);
+
+    const options = document.createElement("div");
+    options.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
     `;
 
-    overlay.appendChild(card);
-    document.body.appendChild(overlay);
-
-    // 5. Add Button Functionality
-    document.getElementById("fb-action-btn").addEventListener("click", () => {
-        if (action === "hard_block") {
-            // Asks background.js to force-close this browser tab
-            chrome.runtime.sendMessage({ closeTab: true }); 
-        } else {
-            overlay.remove(); // Just dismisses it for now
-        }
+    [
+        { label: "5 min", minutes: 5 },
+        { label: "10 min", minutes: 10 },
+        { label: "20 min", minutes: 20 },
+    ].forEach(({ label, minutes }) => {
+        const button = makeButton(label, true);
+        button.addEventListener("click", () => scheduleReminder(minutes, details));
+        options.appendChild(button);
     });
 
-    document.getElementById("fb-action-btn").addEventListener("mouseover", function() { this.style.background = "#1557b0"; });
-    document.getElementById("fb-action-btn").addEventListener("mouseout", function() { this.style.background = "#1a73e8"; });
+    const skipButton = makeButton("No reminder", false);
+    skipButton.style.marginTop = "8px";
+    skipButton.addEventListener("click", () => popup.remove());
 
-    if (!isBlocking) {
-        document.getElementById("fb-dismiss").addEventListener("click", () => overlay.remove());
+    popup.append(title, message, options, skipButton);
+}
+
+function scheduleReminder(minutes, details) {
+    const popup = document.getElementById(ASK_POPUP_ID);
+    if (popup) {
+        popup.replaceChildren(
+            makeElement("h2", "Reminder set", `
+                margin: 0 0 8px;
+                font-size: 17px;
+                line-height: 1.25;
+                font-weight: 650;
+                color: #202124;
+            `),
+            makeElement("p", `I'll check back in ${minutes} minutes.`, `
+                margin: 0;
+                color: #4b5563;
+                font-size: 13px;
+                line-height: 1.45;
+            `),
+        );
+
+        window.setTimeout(() => popup.remove(), 1800);
     }
+
+    window.setTimeout(() => {
+        showAskUser({
+            ...details,
+            reason: "Reminder: are you still procrastinating?",
+        });
+    }, minutes * 60 * 1000);
+}
+
+function showHardBan(details) {
+    removeFocusBuddyUi();
+
+    const overlay = document.createElement("div");
+    overlay.id = OVERLAY_ID;
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.style.cssText = `
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: grid;
+        place-items: center;
+        box-sizing: border-box;
+        padding: 24px;
+        background: #f8fafc;
+        color: #202124;
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    `;
+
+    const panel = document.createElement("section");
+    panel.style.cssText = `
+        width: min(460px, 100%);
+        box-sizing: border-box;
+        padding: 28px;
+        border: 1px solid #d9dee8;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 22px 60px rgba(32, 33, 36, 0.2);
+        text-align: center;
+    `;
+
+    const title = makeElement("h1", "This page is blocked", `
+        margin: 0 0 10px;
+        font-size: 24px;
+        line-height: 1.2;
+        font-weight: 700;
+        color: #111827;
+    `);
+    const message = makeElement("p", details.reason || "Focus Buddy blocked this tab for your current session.", `
+        margin: 0 0 18px;
+        color: #4b5563;
+        font-size: 14px;
+        line-height: 1.5;
+    `);
+
+    const meta = makeElement("p", buildMetaText(details), `
+        margin: 0 0 20px;
+        color: #6b7280;
+        font-size: 12px;
+        line-height: 1.4;
+    `);
+
+    const closeTabButton = makeButton("Close tab", true);
+    closeTabButton.style.width = "100%";
+    closeTabButton.addEventListener("click", () => {
+        chrome.runtime.sendMessage({ closeTab: true });
+    });
+
+    const dashboardLink = document.createElement("a");
+    dashboardLink.textContent = "Open dashboard";
+    dashboardLink.href = details.web_url || "#";
+    dashboardLink.target = "_blank";
+    dashboardLink.rel = "noopener noreferrer";
+    dashboardLink.style.cssText = `
+        display: inline-block;
+        margin-top: 14px;
+        color: #1a73e8;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+    `;
+
+    panel.append(title, message, meta, closeTabButton, dashboardLink);
+    overlay.appendChild(panel);
+    document.documentElement.appendChild(overlay);
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+}
+
+function buildAskMessage({ reason, classification, confidence }) {
+    if (reason) return reason;
+
+    const confidenceText =
+        typeof confidence === "number" ? `${Math.round(confidence * 100)}%` : "unknown confidence";
+    return `This page looks ${classification || "uncertain"} with ${confidenceText}.`;
+}
+
+function buildMetaText({ classification, confidence, sessionType }) {
+    const parts = [];
+    if (classification) parts.push(`Classification: ${classification}`);
+    if (typeof confidence === "number") parts.push(`Confidence: ${Math.round(confidence * 100)}%`);
+    if (sessionType) parts.push(`Session: ${sessionType}`);
+    return parts.join(" | ");
+}
+
+function makeButton(label, primary) {
+    const button = makeElement("button", label, `
+        min-height: 38px;
+        border: 1px solid ${primary ? "#1a73e8" : "#d1d5db"};
+        border-radius: 8px;
+        background: ${primary ? "#1a73e8" : "#ffffff"};
+        color: ${primary ? "#ffffff" : "#374151"};
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 650;
+        font-family: inherit;
+    `);
+    button.type = "button";
+    return button;
+}
+
+function makeElement(tagName, text, cssText) {
+    const element = document.createElement(tagName);
+    element.textContent = text;
+    element.style.cssText = cssText;
+    return element;
 }
