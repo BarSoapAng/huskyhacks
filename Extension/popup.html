@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      width: 200px;
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      text-align: center;
+      color: #202124;
+    }
+    .status-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #0f9d58; /* Google Green */
+      margin-bottom: 15px;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #0f9d58;
+      border-radius: 50%;
+      box-shadow: 0 0 5px rgba(15, 157, 88, 0.5);
+    }
+    hr {
+      border: 0;
+      border-top: 1px solid #e8eaed;
+      margin: 15px 0;
+    }
+    a.link-btn {
+      text-decoration: none;
+      color: #1a73e8; /* Google Blue */
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: 0.2s;
+    }
+    a.link-btn:hover {
+      color: #1557b0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Connection Status -->
+  <div class="status-container" id="status-display">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">Connected!</span>
+  </div>
+
+  <hr>
+
+  <!-- The Link -->
+  <a href="#" target="_blank" id="dashboard-link" class="link-btn">
+    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+    Open Dashboard
+  </a>
+
+  <!-- Link the logic script -->
+  <script src="popup.js"></script>
+</body>
+</html>
