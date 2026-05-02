@@ -1,27 +1,28 @@
-// Retrieve the saved data from Chrome's local storage
-chrome.storage.local.get(["web_url", "isConnected"], (data) => {
-    
-    // 1. Update the Web URL link
-    const dashboardLink = document.getElementById("dashboard-link");
-    if (data.web_url) {
-        dashboardLink.href = data.web_url;
-    } else {
-        // Fallback just in case the server hasn't sent a URL yet
-        dashboardLink.href = "https://google.com"; 
-    }
+import { EXTENSION_PORT, WEB_URL } from './config.js';
 
-    // 2. Update the status indicator (Optional, but good for debugging!)
+const BACKEND_URL = `${EXTENSION_PORT}/status`;
+
+async function updatePopup() {
     const statusText = document.getElementById("status-text");
     const statusDot = document.getElementById("status-dot");
     const statusContainer = document.getElementById("status-display");
+    const dashboardLink = document.getElementById("dashboard-link");
 
-    if (data.isConnected) {
+    try {
+        const response = await fetch(BACKEND_URL);
+        await response.json();
+
+        dashboardLink.href = WEB_URL;
         statusText.innerText = "Connected!";
         statusContainer.style.color = "#0f9d58"; // Green
         statusDot.style.backgroundColor = "#0f9d58";
-    } else {
+        
+    } catch (error) {
+        dashboardLink.href = WEB_URL;
         statusText.innerText = "Disconnected";
         statusContainer.style.color = "#ea4335"; // Red
         statusDot.style.backgroundColor = "#ea4335";
     }
-});
+}
+
+updatePopup();
