@@ -34,8 +34,11 @@ async function updatePopup() {
     // Load and display the last check URL result
     try {
         const storage = await chrome.storage.local.get(['lastCheckUrl', 'lastCheckResult']);
+        console.log('[FocusBuddy Popup] Storage data:', storage);
+        
         if (storage.lastCheckUrl && storage.lastCheckResult) {
             const result = storage.lastCheckResult;
+            console.log('[FocusBuddy Popup] Displaying result:', result);
             
             // Populate the check result section
             document.getElementById("last-url").innerText = storage.lastCheckUrl;
@@ -55,9 +58,12 @@ async function updatePopup() {
             }
             
             checkResultDiv.style.display = 'block';
+        } else {
+            console.log('[FocusBuddy Popup] No check result yet - navigate to a web page');
+            checkResultDiv.style.display = 'none';
         }
     } catch (error) {
-        console.error('Error loading check result:', error);
+        console.error('[FocusBuddy Popup] Error loading check result:', error);
     }
 }
 

@@ -7,8 +7,23 @@ const CHECK_URL = `${EXTENSION_PORT}/api/check-url`;
 let recentTabs = [];
 const MAX_RECENT_TABS = 5;
 
+// Filter function to skip extension URLs
+function isValidWebUrl(url) {
+    if (!url) return false;
+    // Skip extension URLs, chrome URLs, and local file URLs
+    const invalidPatterns = ['chrome://', 'chrome-extension://', 'about:', 'file://'];
+    return !invalidPatterns.some(pattern => url.startsWith(pattern));
+}
+
 // Function to check URL and react
 async function checkUrl(tabId, url) {
+    // Skip checking extension and system URLs
+    if (!isValidWebUrl(url)) {
+        console.log(`Skipping non-web URL: ${url}`);
+        return;
+    }
+    
+    console.log(`[FocusBuddy] Checking URL: ${url}`);
     try {
         // Get tab title
         let pageTitle = "";
@@ -41,6 +56,7 @@ async function checkUrl(tabId, url) {
         }
 
         const data = await response.json();
+        console.log(`[FocusBuddy] Response for ${url}:`, data);
 
         // Update connection status and store last check result
         chrome.storage.local.set({
@@ -50,6 +66,7 @@ async function checkUrl(tabId, url) {
             lastCheckResult: data,
             lastCheckTime: new Date().toLocaleTimeString()
         });
+        console.log('[FocusBuddy] Storage updated with check result');
 
         // If action is not "allow", send message to content script
         if (data.action && data.action !== "allow") {
@@ -73,16 +90,21 @@ async function checkUrl(tabId, url) {
 // Listen for tab updates
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url) {
-        // Add to recent tabs
-        if (!recentTabs.includes(tab.url)) {
-            recentTabs.push(tab.url);
-            if (recentTabs.length > MAX_RECENT_TABS) {
-                recentTabs.shift();
+        console.log(`[FocusBuddy] Tab ${tabId} updated: ${tab.url}`);
+        
+        // Only process web URLs
+        if (isValidWebUrl(tab.url)) {
+            // Add to recent tabs
+            if (!recentTabs.includes(tab.url)) {
+                recentTabs.push(tab.url);
+                if (recentTabs.length > MAX_RECENT_TABS) {
+                    recentTabs.shift();
+                }
             }
-        }
 
-        // Check the URL
-        checkUrl(tabId, tab.url);
+            // Check the URL
+            checkUrl(tabId, tab.url);
+        }
     }
 });
 
@@ -90,11 +112,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
     try {
         const tab = await chrome.tabs.get(activeInfo.tabId);
-        if (tab.url) {
+        if (tab.url && isValidWebUrl(tab.url)) {
+            console.log(`[FocusBuddy] Tab ${activeInfo.tabId} activated: ${tab.url}`);
             checkUrl(activeInfo.tabId, tab.url);
         }
     } catch (err) {
-        console.warn('Error handling tab activation:', err);
+        console.warn('[FocusBuddy] Error handling tab activation:', err);
     }
 });
 

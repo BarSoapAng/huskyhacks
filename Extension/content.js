@@ -10,7 +10,7 @@ function showPopup(action, web_url, reason, procrastinationScore) {
 
     // 2. Define text and styles based on the action
     let title = "";
-    let message = "";
+    let message = "";e
     let buttonText = "";
     let isBlocking = false;
 
