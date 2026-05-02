@@ -54,3 +54,24 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```txt
 GET http://127.0.0.1:8000/health
 ```
+
+## Check URL
+
+```txt
+POST http://127.0.0.1:8000/api/check-url
+```
+
+This endpoint calls Gemini after the debounce window for potentially distracting URLs.
+Set these variables in the repo-root `.env` file:
+
+```txt
+GEMINI_API_KEY=your-api-key
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+```json
+{
+  "url": "https://www.youtube.com/shorts/abc123?si=test",
+  "pageTitle": "Funny fails compilation"
+}
+```
